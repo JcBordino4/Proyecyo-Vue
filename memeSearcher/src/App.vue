@@ -5,6 +5,7 @@ import { ref, computed } from "@vue/reactivity";
 const memes = ref([]);
 let memesTotal = [];
 const favorites = ref([]); // Inicializamos como un array vacío
+const searchQuery = ref(""); // Variable para la búsqueda
 
 // Cargar los memes desde la API
 const loadData = async () => {
@@ -13,7 +14,7 @@ const loadData = async () => {
 
   memes.value = data.memes;
   memesTotal = data.memes;
-  
+
   // Recuperamos los favoritos del almacenamiento local (si existen)
   const storedFavorites = JSON.parse(localStorage.getItem('favorites')) || [];
   favorites.value = storedFavorites;
@@ -45,9 +46,19 @@ const isFavorite = (memeId) => {
   return favorites.value.some(fav => fav.id === memeId);
 };
 
+// Computed para filtrar memes según la búsqueda
+const filteredMemes = computed(() => {
+  if (!searchQuery.value) {
+    return memes.value; // Si no hay búsqueda, mostramos todos los memes
+  }
+  return memes.value.filter(meme =>
+    meme.name.toLowerCase().includes(searchQuery.value.toLowerCase())
+  );
+});
+
 // Ordenamos los memes: los favoritos primero
 const sortedMemes = computed(() => {
-  return [...memes.value].sort((a, b) => {
+  return [...filteredMemes.value].sort((a, b) => {
     const isFavoriteA = favorites.value.some(fav => fav.id === a.id);
     const isFavoriteB = favorites.value.some(fav => fav.id === b.id);
     
@@ -82,7 +93,7 @@ loadData();
             <path d="m21 21-4.3-4.3"></path>
           </g>
         </svg>
-        <input type="search" class="grow" placeholder="Search Meme" v-on:input="searchMeme" />
+        <input type="search" class="grow" placeholder="Search Meme" v-model="searchQuery" />
       </label>
     </div>
   </div>
